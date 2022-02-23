@@ -1,0 +1,1 @@
+# Szamitogepi-grafika
