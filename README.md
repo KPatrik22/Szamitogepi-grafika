@@ -1,21 +1,14 @@
 # Számítógépi grafika beadandó leírása
 ## Rövid leírás
-- Az elképzelés az, hogy egy erdei viskót lehet körüljárni.
+- Egy fát látunk, amit meg lehet rázni. A rázással nő annak a valószínűsége, hogy lehullik-e egy-egy levele.
 ## Alapvető funkciók
-- Kamera mozgatása (3D)
+- Fa rázása
+- Kamera mozgatása
 - Kamera forgatása
 ## Egyéb funkciók
 - Fény állítása
 - Kamera alaphelyzetbe állítása
-- Help menu
-## Irányítás
-| Billentyű           | Funkció               |
-|:-------------------:|:---------------------:|
-| W,A,S,D,SPACE,SHIFT | Kamera mozgatása      |
-| MOUSE               | Kamera forgatása      |
-| Q - E               | Fényerő állítása      |
-| F1                  | Help menu             |
-| R                   | Alaphelyzetbe állítás |
+- Használati útmutató
 ## Követelmények
 ### Alap
 - Kamerakezelés
@@ -25,5 +18,4 @@
 - Fények
 - Használati útmutató
 ### Bónusz
-- Köd
-- Ütközésvizsgálat
+- Köd és/vagy Eső
