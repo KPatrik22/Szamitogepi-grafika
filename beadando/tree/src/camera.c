@@ -6,8 +6,8 @@
 
 void init_camera(Camera* camera)
 {
-    camera->position.x = 0.0;
-    camera->position.y = 0.0;
+    camera->position.x = -2.0;
+    camera->position.y = 3.0;
     camera->position.z = 1.0;
     camera->rotation.x = 0.0;
     camera->rotation.y = 0.0;
@@ -31,6 +31,15 @@ void update_camera(Camera* camera, double time)
     camera->position.y += sin(angle) * camera->speed.y * time;
     camera->position.x += cos(side_angle) * camera->speed.x * time;
     camera->position.y += sin(side_angle) * camera->speed.x * time;
+
+    double angle2 = degree_to_radian(camera->rotation.x);
+
+	camera->position.z += sin(angle2) *  camera->speed.y * time;
+
+	if(camera->position.z < 0.1)   // -0,1
+	{
+		camera->position.z = 0.1;
+	}
 }
 
 void set_view(const Camera* camera)
