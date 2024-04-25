@@ -3,14 +3,22 @@
 
 #include "camera.h"
 #include "texture.h"
+#include "leaf.h"
 
 #include <obj/model.h>
 
 typedef struct Scene
 {
-    Model cube;
+    Model tree;
+    Leaf leaf;
     Material material;
-    GLuint texture_id;
+    GLuint tree_texture_id;
+    GLuint leaf_texture_id;
+    float lighting_level;
+    GLfloat fogColor[4];
+    bool helpmenu_bool;
+    GLuint helpmenu_t;
+    vec3* initial_tree_vertices;
 } Scene;
 
 /**
@@ -21,7 +29,7 @@ void init_scene(Scene* scene);
 /**
  * Set the lighting of the scene.
  */
-void set_lighting();
+void set_lighting(float lighting_level);
 
 /**
  * Set the current material.

@@ -1,10 +1,17 @@
 #include "app.h"
+#include "leaf.h"
 
 #include <SDL2/SDL_image.h>
 
 float shake_amount = 0.0f;
 float shake_frequency = 10.0f;
-float spawn_probability = 0.0f;
+
+bool leaf_falling = false;
+bool fogDensityEnabled = true;
+
+float min = 0.2f;
+float max = 2.0f;
+float current_x, current_y = 1.5f;
 
 void init_app(App* app, int width, int height)
 {
@@ -129,13 +136,49 @@ void handle_app_events(App* app)
             case SDL_SCANCODE_D:
                 set_camera_side_speed(&(app->camera), -1);
                 break;
+            case SDL_SCANCODE_P:
+                if(app->scene.lighting_level <= 1)
+                {
+                    app->scene.lighting_level += 0.2f;
+                }
+                set_lighting(app->scene.lighting_level);
+                break;
+            case SDL_SCANCODE_O:
+                if(app->scene.lighting_level >= -0.2f)
+                {
+                    app->scene.lighting_level -= 0.2f;
+                }
+                set_lighting(app->scene.lighting_level);
+                break;
+            case SDL_SCANCODE_F1:
+                if (app->scene.helpmenu_bool)
+                {
+                    app->scene.helpmenu_bool = false;
+                  
+                }
+                else
+                {
+                    app->scene.helpmenu_bool = true;
+                }
+                break;
+            case SDL_SCANCODE_K:
+                fogDensityEnabled = !fogDensityEnabled;
+                if (fogDensityEnabled) {
+                    glFogf(GL_FOG_DENSITY, 0.5f); 
+                } else {
+                    glFogf(GL_FOG_DENSITY, 0.0f);
+                } 
+                break;
             case SDL_SCANCODE_1:
-                        // Pressing key 1 increases shake amount
                 shake_amount += 0.01f;
                 break;
             case SDL_SCANCODE_2:
-                        // Pressing key 2 decreases shake amount
-                shake_amount -= 0.01f;
+                shake_amount = 0.0f;
+                break;
+            case SDL_SCANCODE_3:
+                leaf_falling = false;
+                generate_random_coordinates(&current_x, &current_y, min, max);
+                leaf_falling = true;
                 break;
             default:
                 break;
@@ -178,51 +221,14 @@ void handle_app_events(App* app)
     }
 }
 
-void spawn_new_model(Scene* scene)
-{
-    // Create a new model instance (you may need to adjust this based on your model initialization)
-    Model new_model;
-    // Initialize the properties of the new model
-    // For example:
-    new_model.n_vertices = 0; // Set the number of vertices
-    new_model.vertices = NULL; // Initialize the vertices array (you may need to allocate memory and set actual vertex data)
-    
-    // Add the new model to the scene
-    // For example:
-    // Copy the new model to the scene's model (you may need to adjust this based on your scene structure)
-
-
-
-        //scene->new_model = new_model; lajos
-}
-
 void update_scene(Scene* scene)
 {
-    // Apply shaking effect to the model
-    if (shake_amount > 0.0f) {
-        // Calculate displacement based on sine wave
-        float displacement = shake_amount * sin(SDL_GetTicks() / shake_frequency);
+    
+}
 
-        int num_vertices = get_model_num_vertices(&(scene->cube));
-        
-        // Apply displacement to model vertices
-        for (int i = 0; i < num_vertices; ++i) {
-            scene->cube.vertices[i].x += displacement;
-            scene->cube.vertices[i].y += displacement;
-            scene->cube.vertices[i].z += displacement;
-        }
-
-        spawn_probability += shake_amount * 0.001f; // Adjust the factor as needed
-        
-        // Check if the spawn probability exceeds a threshold
-        if (spawn_probability > 0.5f) { // Adjust the threshold as needed
-            // Reset the spawn probability
-            spawn_probability = 0.0f;
-
-            // Spawn a new model (implement spawning logic)
-            spawn_new_model(scene);
-        }
-    }
+void generate_random_coordinates(float *x, float *y, float min, float max) {
+    *x = ((float)rand() / RAND_MAX) * (max - min) + min;
+    *y = ((float)rand() / RAND_MAX) * (max - min) + min;
 }
 
 void update_app(App* app)
@@ -236,6 +242,35 @@ void update_app(App* app)
 
     update_camera(&(app->camera), elapsed_time);
     update_scene(&(app->scene));
+
+    if (leaf_falling == true) 
+    {
+        app->scene.leaf.pos.x = current_x;
+        app->scene.leaf.pos.y = current_y;
+        app->scene.leaf.speed.z = -1.0;
+        move_leaf(&(app->scene.leaf), elapsed_time);
+    }
+    else 
+    {
+        leaf_falling = false;
+        leaf_kezdo(&(app->scene.leaf));
+    }
+
+    if (shake_amount > 0.0f) {
+        float displacement = shake_amount * sin(SDL_GetTicks() / shake_frequency);
+        
+        for (int i = 0; i < app->scene.tree.n_vertices; ++i) {
+            app->scene.tree.vertices[i].x += displacement;
+            app->scene.tree.vertices[i].y += displacement;
+            app->scene.tree.vertices[i].z += displacement;
+        }
+    }
+
+    if(app->scene.leaf.pos.z < 0) 
+    {
+        leaf_falling = false;
+        leaf_kezdo(&(app->scene.leaf));
+    }
 }
 
 void render_app(App* app)

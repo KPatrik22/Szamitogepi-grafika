@@ -1,41 +1,101 @@
 #include "scene.h"
-
+#include "leaf.h"
 #include <obj/load.h>
+#include <obj/model.h>
 #include <obj/draw.h>
 
 void init_scene(Scene* scene)
 {
-    load_model(&(scene->cube), "assets/models/tree2.obj");
-    scene->texture_id = load_texture("assets/textures/tree2.jpg");
+    load_model(&(scene->tree), "assets/models/tree2.obj");
+    scene->tree_texture_id = load_texture("assets/textures/tree2.jpg");
 
-    glBindTexture(GL_TEXTURE_2D, scene->texture_id);
+    scene->helpmenu_t = load_texture("assets/textures/helpmenu_v2.png");
 
-    scene->material.ambient.red = 0.2;
-    scene->material.ambient.green = 0.2;
-    scene->material.ambient.blue = 0.2;
+    init_leaf(&(scene->leaf));
 
-    scene->material.diffuse.red = 0.6;
-    scene->material.diffuse.green = 0.6;
-    scene->material.diffuse.blue = 0.6;
+    scene->material.ambient.red = 1.0;
+    scene->material.ambient.green = 1.0;
+    scene->material.ambient.blue = 1.0;
 
-    scene->material.specular.red = 0.5;
-    scene->material.specular.green = 0.5;
-    scene->material.specular.blue = 0.5;
+    scene->material.diffuse.red = 1.0;
+    scene->material.diffuse.green = 1.0;
+    scene->material.diffuse.blue = 1.0;
 
-    scene->material.shininess = 50.0;
+    scene->material.specular.red = 1.0;
+    scene->material.specular.green = 1.0;
+    scene->material.specular.blue = 1.0;
+
+    scene->material.shininess = 0.0;
+    scene->lighting_level = 0.0;
+
+    scene->fogColor[0] = 0.5f;
+    scene->fogColor[1] = 0.5f;
+    scene->fogColor[2] = 0.5f;
+    scene->fogColor[3] = 1.0f;
+    glEnable(GL_FOG);
+    glFogf(GL_FOG_DENSITY, 0.0f);
+    glFogfv(GL_FOG_COLOR, scene->fogColor);
+    
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+
+    set_lighting(scene->lighting_level);
+    scene->helpmenu_bool = false;
+
+    scene->initial_tree_vertices = malloc(scene->tree.n_vertices * sizeof(vec3));
+    if (scene->initial_tree_vertices == NULL) {
+        // Handle memory allocation failure
+        return;
+    }
+    
+    for (int i = 0; i < scene->tree.n_vertices; ++i) {
+        for (int i = 0; i < scene->tree.n_vertices; ++i) {
+        scene->initial_tree_vertices[i].x = scene->tree.vertices[i].x;
+        scene->initial_tree_vertices[i].y = scene->tree.vertices[i].y;
+        scene->initial_tree_vertices[i].z = scene->tree.vertices[i].z;
+    }
+    }
 }
 
-void set_lighting()
+void set_lighting(float lighting_level)
 {
-    float ambient_light[] = { 1.0f, 1.0f, 1.0, 1.0f };
-    float diffuse_light[] = { 1.0f, 1.0f, 1.0, 1.0f };
-    float specular_light[] = { 1.0f, 1.0f, 1.0, 1.0f };
-    float position[] = { 3.0f, 5.0f, 10.0f, 1.0f };
+    float ambient_light[] = { lighting_level, lighting_level, lighting_level, 1.0f };
+    float diffuse_light[] = { lighting_level, lighting_level, lighting_level, 1.0f };
+    float specular_light[] = { lighting_level, lighting_level, lighting_level, 1.0f };
+    float position[] = { 0.0f, 0.0f, 3.0f, 1.0f };
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient_light);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse_light);
     glLightfv(GL_LIGHT0, GL_SPECULAR, specular_light);
     glLightfv(GL_LIGHT0, GL_POSITION, position);
+}
+
+void helpmenu(GLuint tid)
+{
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_COLOR_MATERIAL);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glBindTexture(GL_TEXTURE_2D, tid);
+    glColor3f(1, 1, 1);
+
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 0);
+    glVertex3f(-2.0, 2.0, -3);
+    glTexCoord2f(1, 0);
+    glVertex3f(2.0, 2.0, -3);
+    glTexCoord2f(1, 1);
+    glVertex3f(2.0, -2.0, -3);
+    glTexCoord2f(0, 1);
+    glVertex3f(-2.0, -2.0, -3);
+    glEnd();
+
+    glDisable(GL_COLOR_MATERIAL);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void set_material(const Material* material)
@@ -67,19 +127,34 @@ void set_material(const Material* material)
 
 //void update_scene(Scene* scene){}
 
-int get_model_num_vertices(Model* model) {
-    // You need to implement this function based on how your model data is structured
-    // For example, if your model structure contains an array of vertices,
-    // you can calculate the number of vertices as the size of this array
-    return model->n_vertices;
-}
-
 void render_scene(const Scene* scene)
 {
+    GLfloat light_position[] = { 0.0, 0, 3, 2.0f };
+    GLfloat light_direction[] = { 0.0f, 0.0f, -1.0f };
+    GLfloat light_color[] = { 1.0f, 1.0f, 1.0f, 2.0f };
+    GLfloat spot_cutoff = 45.0f;
+    GLfloat spot_exponent = 2.0f;
+    
     set_material(&(scene->material));
-    set_lighting();
+    
+    glBindTexture(GL_TEXTURE_2D, scene->tree_texture_id);
+    glPushMatrix();
+    draw_model(&(scene->tree));
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(scene->leaf.pos.x, scene->leaf.pos.y, scene->leaf.pos.z);
+    glScalef(0.5,0.5,0.5);
+    glBindTexture(GL_TEXTURE_2D, scene->leaf.texture_id);
+    draw_model(&(scene->leaf.model));
+    glPopMatrix();
+
+    if(scene->helpmenu_bool == true)
+    {
+        helpmenu(scene->helpmenu_t);
+    }    
+
     draw_origin();
-    draw_model(&(scene->cube));
 }
 
 void draw_origin()
