@@ -18,4 +18,4 @@
 - Fények
 - Használati útmutató
 ### Bónusz
-- Köd és/vagy Eső
+- Köd
